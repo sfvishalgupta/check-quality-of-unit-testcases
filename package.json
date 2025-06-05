@@ -1,0 +1,23 @@
+{
+  "name": "check-quality-of-unit-testcases",
+  "description": "This action checks the quality of unit test cases in a repository via ai.",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc && ncc build"
+  },
+  "keywords": [
+    "actions"
+  ],
+  "author": "Vishal Gupta",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "OpenRouterAIExample": "file:./OpenRouterAIExample",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "husky": "^9.1.7"
+  }
+}

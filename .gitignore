@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+OpenRouterAIExample/
+reports/
+prompts/
+docs/
+examples/
+coverage/
+dist/
+package-lock.json
+.env
+output-*.txt

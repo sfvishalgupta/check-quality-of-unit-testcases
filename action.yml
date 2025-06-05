@@ -1,0 +1,135 @@
+name: 'Test Quality Checker'
+description: 'A GitHub Action to check the quality of unit test cases via OpenRouterAI/Gemini.'
+inputs:
+  AI_PROVIDER:
+    description: 'The AI provider to use for generating test cases.'
+    required: true
+    default: 'Test'  # or 'GEMINI' based on your preference
+  JIRA_TICKET_ID:
+    description: 'The JIRA ticket ID for tracking issues.'
+    required: true
+    default: 'BMSAAS'
+  JIRA_API_TOKEN:
+    description: 'The JIRA API token for authentication.'
+    required: true
+  JIRA_EMAIL:
+    description: 'The JIRA email for authentication.'
+    required: true
+  JIRA_FETCH_FIELDS:
+    description: 'Fields to fetch from JIRA.'
+    required: true
+    default: 'summary,description,customfield_10000' 
+  JIRA_MAX_RESULT:
+    description: 'Maximum number of results to fetch from JIRA.'
+    required: true
+    default: '100'
+  JIRA_PROJECT_KEY:
+    description: 'The JIRA project key to filter issues.'
+    required: true
+    default: ''
+  JIRA_URL:   
+    description: 'The JIRA instance URL.'
+    required: true
+    default: 'https://your-jira-instance.atlassian.net'
+  OPEN_ROUTER_API_KEY:
+    description: 'The OpenRouter API key for authentication.'
+  OPEN_ROUTER_API_URL:
+    description: 'The OpenRouter API URL.'
+    default: 'https://api.openrouter.ai/v1'
+  OPEN_ROUTER_MODEL:
+    description: 'The OpenRouter model to use for generating test cases.'
+    default: 'openrouter-ai-model'  # Replace with your actual model name
+  GEMINI_API_KEY:
+    description: 'The Gemini API key for authentication.'
+    required: false
+  GEMINI_API_URL:
+    description: 'The Gemini API URL.'
+    required: false
+    default: 'https://gemini.googleapis.com/v1'
+  REPORT_FILE_PATH:
+    description: 'The file path to save the report.'
+    required: false
+    default: ''
+  PROJECT_DOCUMENT_PATH:
+    description: 'The path to the project documentation.'
+    required: false
+    default: ''  # Adjust as necessary
+  GITHUB_TOKEN:
+    description: 'GitHub token for authentication.'
+    required: true
+    default: ''
+  GITHUB_ISSUE_NUMBER:
+    description: 'The GitHub issue number to link the report.'
+    required: true
+    default: ''  # Optional, can be set to link the report to a specific issue
+outputs:
+  comment_body:
+    description: 'The body of the output from the OpenRouterAI script.'
+
+permissions:
+  pull-requests: write
+  issues: write
+
+runs:
+  using: 'composite'  # or 'node20' if you prefer
+  steps:
+    - name: Run bash command
+      shell: bash
+      run: echo "Pre-script bash logic ✅"
+    
+    - name: Create timestamp and export to env
+      id: timestamp
+      shell: bash
+      run: |
+        echo "TIMESTAMP=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
+    - name: Setup OpenRouterAPI
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        if [ ! -d "OpenRouterAIExample" ]; then
+            git clone https://github.com/sfvishalgupta/OpenRouterAIExample.git OpenRouterAIExample
+            cd OpenRouterAIExample && npm install && cd .. && npm install
+        fi
+
+    - name: Run Node.js logic
+      id: run-get-ut-test-cases-open-router-ai
+      shell: bash
+      env: 
+        AI_PROVIDER: ${{ inputs.AI_PROVIDER }}
+        JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
+        JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}
+        JIRA_EMAIL: ${{inputs.JIRA_EMAIL}}
+        JIRA_FETCH_FIELDS: ${{inputs.JIRA_FETCH_FIELDS}}
+        JIRA_MAX_RESULT: ${{inputs.JIRA_MAX_RESULT}}
+        JIRA_PROJECT_KEY: ${{inputs.JIRA_PROJECT_KEY}}
+        JIRA_URL: ${{inputs.JIRA_URL}}
+        OPEN_ROUTER_API_KEY: ${{inputs.OPEN_ROUTER_API_KEY}}
+        OPEN_ROUTER_API_URL: ${{inputs.OPEN_ROUTER_API_URL}}
+        OPEN_ROUTER_MODEL: ${{inputs.OPEN_ROUTER_MODEL}}
+        GEMINI_API_KEY: ${{inputs.GEMINI_API_KEY || '' }}
+        GEMINI_API_URL: ${{inputs.GEMINI_API_URL || '' }}
+        REPORT_FILE_PATH: ${{ inputs.REPORT_FILE_PATH || '' }}
+        PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
+        GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        OUTPUT_FILE: "output-${{env.TIMESTAMP}}.txt"
+      run: |
+        touch output-${{env.TIMESTAMP}}.txt
+        npx ts-node ${{ github.action_path }}/index.ts
+        content=$(cat output-${{env.TIMESTAMP}}.txt)
+        echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+        echo "$content" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Comment on PR ${{ inputs.AI_PROVIDER }} Output
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        token: ${{ inputs.GITHUB_TOKEN }}
+        issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
+        body: |
+          📝 Script output via ${{ inputs.AI_PROVIDER }}:
+          ${{ steps.run-get-ut-test-cases-open-router-ai.outputs.comment_body }}
+        
+
+  
