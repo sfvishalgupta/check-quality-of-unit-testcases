@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "build": "tsc && ncc build"
+    "build": "tsc && ncc build",
+    "format": "prettier --write '**/*.ts'",
+    "format-check": "prettier --check '**/*.ts'"
   },
   "keywords": [
     "actions"
@@ -18,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3"
   }
 }

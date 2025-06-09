@@ -1,19 +1,17 @@
-import fs from 'fs';
-import { GetJiraTitle } from './utils/jira';
-import { ENV_VARIABLES } from './environment';
-import { getDocumentContent } from './OpenRouterAIExample/utils'
-import { askQuestionViaAPI } from './OpenRouterAIExample/services';
-
+import fs from "fs";
+import { GetJiraTitle } from "./utils/jira";
+import { ENV_VARIABLES } from "./environment";
+import { getDocumentContent } from "./OpenRouterAIExample/utils";
+import { askQuestionViaAPI } from "./OpenRouterAIExample/services";
 
 async function getSystemPrompt(): Promise<string> {
   try {
-    const systemPromptPath = __dirname + '/prompts/SystemPrompts.txt';
+    const systemPromptPath = __dirname + "/prompts/SystemPrompts.txt";
     if (!fs.existsSync(systemPromptPath)) {
       throw new Error(`System prompt file not found at ${systemPromptPath}`);
     }
     return getDocumentContent(systemPromptPath);
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof Error) {
       console.error(`Error reading system prompt: ${error.message}`);
     } else {
@@ -24,11 +22,12 @@ async function getSystemPrompt(): Promise<string> {
 }
 
 /**
- * 
+ *
  */
 async function getUserPrompt(): Promise<string> {
   try {
-    const userPromptPath = __dirname + '/prompts/CreateTestCasesForTenantListing.txt';
+    const userPromptPath =
+      __dirname + "/prompts/CreateTestCasesForTenantListing.txt";
     if (!fs.existsSync(userPromptPath)) {
       throw new Error(`User prompt file not found at ${userPromptPath}`);
     }
@@ -46,12 +45,15 @@ async function getUserPrompt(): Promise<string> {
 async function getProjectDocument(): Promise<string> {
   try {
     let content = "";
-    const projectDocumentPath = process.cwd() + "/" + ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
+    const projectDocumentPath =
+      process.cwd() + "/" + ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
     const listOfFiles: string[] = projectDocumentPath.split(",");
     for (const filepath of listOfFiles) {
       try {
         if (!fs.existsSync(filepath)) {
-          throw new Error(`Project document file not found at ${projectDocumentPath}`);
+          throw new Error(
+            `Project document file not found at ${projectDocumentPath}`,
+          );
         }
         content += await getDocumentContent(projectDocumentPath);
       } catch (e) {
@@ -90,13 +92,14 @@ async function getReportFilePath(): Promise<string> {
   }
 }
 
-
 async function run(): Promise<void> {
   try {
-    console.log('Hello, World! 👋 from github action');
+    console.log("Hello, World! 👋 from github action");
 
-    if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === '') {
-      throw new Error('Please provide a valid report file path in the environment variables.');
+    if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === "") {
+      throw new Error(
+        "Please provide a valid report file path in the environment variables.",
+      );
     }
 
     const jiraTitle: string = await GetJiraTitle();
@@ -105,17 +108,21 @@ async function run(): Promise<void> {
     const reportFileContent = await getReportFilePath();
     let userPrompt: string = await getUserPrompt();
 
-    userPrompt = userPrompt.replace('##REPORT##', reportFileContent);
-    userPrompt = userPrompt.replace('##PLACEHOLDER##', jiraTitle);
+    userPrompt = userPrompt.replace("##REPORT##", reportFileContent);
+    userPrompt = userPrompt.replace("##PLACEHOLDER##", jiraTitle);
 
-    const response = await askQuestionViaAPI(userPrompt, systemPrompt, projectDocument);
+    const response = await askQuestionViaAPI(
+      userPrompt,
+      systemPrompt,
+      projectDocument,
+    );
     if (response) {
-      console.log('Response from API:', response);
+      console.log("Response from API:", response);
     }
 
-    const outputFilePath = process.cwd() + '/' + ENV_VARIABLES.OUTPUT_FILE;
+    const outputFilePath = process.cwd() + "/" + ENV_VARIABLES.OUTPUT_FILE;
     console.log(`Writing response to file: ${outputFilePath}`);
-    fs.writeFileSync(outputFilePath, response, 'utf8');
+    fs.writeFileSync(outputFilePath, response, "utf8");
 
     return response;
   } catch (error) {
