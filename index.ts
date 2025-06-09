@@ -4,6 +4,7 @@ import { ENV_VARIABLES } from './environment';
 import { getDocumentContent } from './OpenRouterAIExample/utils'
 import { askQuestionViaAPI } from './OpenRouterAIExample/services';
 
+
 async function getSystemPrompt(): Promise<string> {
   try {
     const systemPromptPath = __dirname + '/prompts/SystemPrompts.txt';
@@ -22,6 +23,9 @@ async function getSystemPrompt(): Promise<string> {
   }
 }
 
+/**
+ * 
+ */
 async function getUserPrompt(): Promise<string> {
   try {
     const userPromptPath = __dirname + '/prompts/CreateTestCasesForTenantListing.txt';
@@ -41,11 +45,24 @@ async function getUserPrompt(): Promise<string> {
 
 async function getProjectDocument(): Promise<string> {
   try {
+    let content = "";
     const projectDocumentPath = process.cwd() + "/" + ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
-    if (!fs.existsSync(projectDocumentPath)) {
-      throw new Error(`Project document file not found at ${projectDocumentPath}`);
+    const listOfFiles: string[] = projectDocumentPath.split(",");
+    for (const filepath of listOfFiles) {
+      try {
+        if (!fs.existsSync(filepath)) {
+          throw new Error(`Project document file not found at ${projectDocumentPath}`);
+        }
+        content += await getDocumentContent(projectDocumentPath);
+      } catch (e) {
+        if (e instanceof Error) {
+          console.log(`Project document file not found at ${filepath}`);
+        } else {
+          console.error(`Error reading project document: ${String(e)}`);
+        }
+      }
     }
-    return getDocumentContent(projectDocumentPath);
+    return content;
   } catch (error) {
     if (error instanceof Error) {
       console.error(`Error reading project document: ${error.message}`);
