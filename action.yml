@@ -1,6 +1,9 @@
 name: 'Test Quality Checker'
 description: 'A GitHub Action to check the quality of unit test cases via OpenRouterAI/Gemini.'
 inputs:
+  USE_FOR:
+    description: 'The type of test to use for quality checking.'
+    default: 'GenerateTestCasesReport'
   AI_PROVIDER:
     description: 'The AI provider to use for generating test cases.'
     required: true
@@ -96,6 +99,7 @@ runs:
       id: run-get-ut-test-cases-open-router-ai
       shell: bash
       env: 
+        USE_FOR: ${{ inputs.USE_FOR }}
         AI_PROVIDER: ${{ inputs.AI_PROVIDER }}
         JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
         JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}

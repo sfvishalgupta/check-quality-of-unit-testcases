@@ -21,13 +21,13 @@ async function getSystemPrompt(): Promise<string> {
   }
 }
 
-/**
- *
+/** 
+ * This function is the entry point for the OpenRouterAI example.
  */
 async function getUserPrompt(): Promise<string> {
   try {
     const userPromptPath =
-      __dirname + "/prompts/CreateTestCasesForTenantListing.txt";
+      __dirname + "/prompts/" + ENV_VARIABLES.USE_FOR + ".txt";
     if (!fs.existsSync(userPromptPath)) {
       throw new Error(`User prompt file not found at ${userPromptPath}`);
     }

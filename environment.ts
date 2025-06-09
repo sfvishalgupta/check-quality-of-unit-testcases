@@ -23,4 +23,5 @@ export const ENV_VARIABLES = {
   PROJECT_DOCUMENT_PATH: process.env.PROJECT_DOCUMENT_PATH ?? "",
   GITHUB_ISSUE_NUMBER: process.env.GITHUB_ISSUE_NUMBER ?? "",
   OUTPUT_FILE: process.env.OUTPUT_FILE ?? "output.txt",
+  USE_FOR: process.env.USE_FOR ?? "GenerateTestCasesReport",
 };

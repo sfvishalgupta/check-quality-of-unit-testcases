@@ -2,7 +2,6 @@
 node_modules/
 OpenRouterAIExample/
 reports/
-prompts/
 docs/
 examples/
 coverage/
