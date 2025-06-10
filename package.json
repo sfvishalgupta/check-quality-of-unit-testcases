@@ -15,7 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^16.5.0",
-    "OpenRouterAIExample": "file:./OpenRouterAIExample",
+    "OpenRouterAICore": "file:./OpenRouterAICore",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {

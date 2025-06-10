@@ -90,9 +90,9 @@ runs:
       shell: bash
       run: |
         cd ${{ github.action_path }}
-        if [ ! -d "OpenRouterAIExample" ]; then
-            git clone --depth=1 https://github.com/sfvishalgupta/OpenRouterAIExample.git OpenRouterAIExample
-            cd OpenRouterAIExample && npm install && cd .. && npm install
+        if [ ! -d "OpenRouterAICore" ]; then
+            git clone --depth=1 https://github.com/sfvishalgupta/OpenRouterAICore.git OpenRouterAICore
+            cd OpenRouterAICore && npm install && cd .. && npm install
         fi
 
     - name: Run Node.js logic

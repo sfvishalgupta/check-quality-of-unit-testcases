@@ -1,8 +1,8 @@
 import fs from "fs";
 import { GetJiraTitle } from "./utils/jira";
 import { ENV_VARIABLES } from "./environment";
-import { getDocumentContent } from "./OpenRouterAIExample/utils";
-import { askQuestionViaAPI } from "./OpenRouterAIExample/services";
+import { getDocumentContent } from "./OpenRouterAICore/utils";
+import { askQuestionViaAPI } from "./OpenRouterAICore/services";
 
 async function getSystemPrompt(): Promise<string> {
   try {

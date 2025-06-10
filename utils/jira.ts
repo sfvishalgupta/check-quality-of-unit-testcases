@@ -1,6 +1,6 @@
 import { ENV_VARIABLES } from "../environment";
-import { JiraSearchTool } from "../OpenRouterAIExample/tools";
-import { JiraIssue } from "../OpenRouterAIExample/types";
+import { JiraSearchTool } from "../OpenRouterAICore/tools";
+import { JiraIssue } from "../OpenRouterAICore/types";
 
 /**
  * This function extracts text from the Jira issue description.
