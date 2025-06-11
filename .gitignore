@@ -1,11 +1,12 @@
 .DS_Store
 node_modules/
-OpenRouterAICore/
+OpenRouterAICore*
 reports/
 docs/
-examples/
 coverage/
 dist/
 package-lock.json
 .env
 output-*.txt
+run.sh
+createtag.sh

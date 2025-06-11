@@ -24,4 +24,5 @@ export const ENV_VARIABLES = {
   GITHUB_ISSUE_NUMBER: process.env.GITHUB_ISSUE_NUMBER ?? "",
   OUTPUT_FILE: process.env.OUTPUT_FILE ?? "output.txt",
   USE_FOR: process.env.USE_FOR ?? "GenerateTestCasesReport",
+  VECTOR_DB_COLLECTION_NAME: process.env.VECTOR_DB_COLLECTION_NAME ?? "test_cases",
 };
