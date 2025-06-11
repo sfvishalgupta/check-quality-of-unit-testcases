@@ -1,6 +1,7 @@
 import { ENV_VARIABLES } from "../environment";
 import { JiraSearchTool } from "../OpenRouterAICore/tools";
 import { JiraIssue } from "../OpenRouterAICore/types";
+import { logger } from "../OpenRouterAICore/pino";
 
 /**
  * This function extracts text from the Jira issue description.
@@ -36,41 +37,33 @@ const extractParagraphText = (jiraIssue: any): string[] => {
  * It uses the JiraSearchTool to search for the issue and formats the output.
  */
 export const GetJiraTitle = async (): Promise<string> => {
-  try {
-    if (!ENV_VARIABLES.JIRA_TICKET_ID || !ENV_VARIABLES.JIRA_PROJECT_KEY) {
-      throw new Error(
-        "Jira ticket ID or project key is not set in environment variables.",
-      );
-    }
-    const jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
-    const jql: string = `project = '${ENV_VARIABLES.JIRA_PROJECT_KEY}' AND (key = ${jiraId} OR parent = ${jiraId})`;
-    const response: JiraIssue[] = await JiraSearchTool.func(jql);
-    const parentIssue: JiraIssue = response.find(
-      (issue) => issue.key === jiraId,
-    ) as JiraIssue;
-    const subIssues: JiraIssue[] = response.filter(
-      (issue) => issue.key !== jiraId,
+  if (!ENV_VARIABLES.JIRA_TICKET_ID || !ENV_VARIABLES.JIRA_PROJECT_KEY) {
+    throw new Error(
+      "Jira ticket ID or project key is not set in environment variables.",
     );
-    const placeHolder: string = `
+  }
+  const jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
+  const jql: string = `project = '${ENV_VARIABLES.JIRA_PROJECT_KEY}' AND (key = ${jiraId} OR parent = ${jiraId})`;
+  logger.info(`JQL: ${jql} `);
+  const response: JiraIssue[] = await JiraSearchTool.func(jql);
+  const parentIssue: JiraIssue = response.find(
+    (issue) => issue.key === jiraId,
+  ) as JiraIssue;
+  const subIssues: JiraIssue[] = response.filter(
+    (issue) => issue.key !== jiraId,
+  );
+  const placeHolder: string = `
         Jira Story is below in format of title : description
         **${parentIssue.key} :- ${parentIssue.fields.summary}** : ${extractParagraphText(parentIssue.fields.description).join("\n")}
 
         Jira sub story is below in format of title : description
         ${subIssues
-          .map(
-            (issue) => `
+      .map(
+        (issue) => `
         - **${issue.fields.summary}**: ${extractParagraphText(issue.fields.description).join("\n")}
         `,
-          )
-          .join("\n")}
+      )
+      .join("\n")}
     `;
-    return placeHolder;
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error in GetJiraTitle: ${error.message}`);
-    } else {
-      console.error(`Error in GetJiraTitle: ${String(error)}`);
-    }
-  }
-  return "";
+  return placeHolder;
 };

@@ -23,6 +23,11 @@ export const ENV_VARIABLES = {
   PROJECT_DOCUMENT_PATH: process.env.PROJECT_DOCUMENT_PATH ?? "",
   GITHUB_ISSUE_NUMBER: process.env.GITHUB_ISSUE_NUMBER ?? "",
   OUTPUT_FILE: process.env.OUTPUT_FILE ?? "output.txt",
-  USE_FOR: process.env.USE_FOR ?? "GenerateTestCasesReport",
+  USE_FOR: process.env.USE_FOR ?? "GenerateTestCasesReport_API",
   VECTOR_DB_COLLECTION_NAME: process.env.VECTOR_DB_COLLECTION_NAME ?? "test_cases",
+  PROJECT_DOCUMENTS: process.env.PROJECT_DOCUMENTS ?? "local",
+  AWS_REGION: process.env.AWS_REGION ?? "ap-south-1",
+  AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY ?? "",
+  AWS_SECRET_KEY: process.env.AWS_SECRET_KEY ?? "",
+  S3_BUCKET_NAME: process.env.S3_BUCKET_NAME ?? "",
 };

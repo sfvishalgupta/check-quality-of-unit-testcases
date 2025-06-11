@@ -14,11 +14,14 @@ async function main() {
         const store = GetStore();
         const absolutePdfPath = path.resolve(__dirname, pdfPath);
         const text = await getDocumentContent(absolutePdfPath);
-        console.log(text);
         await store.addDocument(indexName, text);
         console.log(`Document added to index "${indexName}" successfully.`);
     } catch (error) {
-        console.error("Error syncing data to vector DB:", error);
+        if (error instanceof Error) {
+            console.error(`Error syncing data to vector DB: ${error.message}`);
+        } else {
+            console.error(`Error syncing data to vector DB: ${String(error)}`);
+        }
         process.exit(1);
     }
 }
