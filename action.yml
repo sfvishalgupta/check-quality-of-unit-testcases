@@ -65,6 +65,14 @@ inputs:
     description: 'The GitHub issue number to link the report.'
     required: true
     default: ''  # Optional, can be set to link the report to a specific issue
+  DOCKER_USERNAME:
+    description: 'The Docker username for authentication.'
+    required: true
+    default: ''
+  DOCKER_PASSWORD:
+    description: 'The Docker password for authentication.'
+    required: true
+    default: ''
 outputs:
   comment_body:
     description: 'The body of the output from the OpenRouterAI script.'
