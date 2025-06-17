@@ -84,10 +84,6 @@ inputs:
     description: "The path to the project documentation."
     required: false
     default: "" # Adjust as necessary
-  PROJECT_DOCUMENTS:
-    description: "Location of Project Documents"
-    required: false
-    default: "S3" # Adjust as necessary
   S3_BUCKET_NAME:
     description: "The name of the S3 bucket to store the report."
     required: false
@@ -158,7 +154,6 @@ runs:
         AWS_SECRET_KEY: ${{ inputs.AWS_SECRET_KEY || '' }}
         AWS_REGION: ${{ inputs.AWS_REGION || 'us-east-1' }}
         AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
-        PROJECT_DOCUMENTS: ${{ inputs.PROJECT_DOCUMENTS || '' }}
         S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
       run: |
         touch output-rag-${{env.TIMESTAMP}}.txt

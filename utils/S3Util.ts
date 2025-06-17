@@ -1,14 +1,18 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
+import path from "path";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+
 import { ENV_VARIABLES } from "../environment";
 import { logger } from "../OpenRouterAICore/pino";
 
-export async function downloadFileFromS3(filePath: string): Promise<string> {
+export async function downloadFileFromS3(folder: string, filePath: string): Promise<string> {
   try {
     filePath = filePath.replace('s3://', '');
-    if (!fs.existsSync(process.cwd() + "/tmp")) {
-      fs.mkdirSync(process.cwd() + "/tmp");
+    filePath = filePath.replace('S3://', '');
+    if (!fs.existsSync(path.dirname(folder + "/" + filePath))) {
+      fs.mkdirSync(path.dirname(folder + "/" + filePath), { recursive: true });
     }
+
     if (!ENV_VARIABLES.AWS_REGION || !ENV_VARIABLES.AWS_ACCESS_KEY || !ENV_VARIABLES.AWS_SECRET_KEY) {
       throw new Error("AWS credentials are not set in environment variables.");
     }
@@ -20,7 +24,7 @@ export async function downloadFileFromS3(filePath: string): Promise<string> {
       },
     });
     logger.info(`Downloading file from Bucket: ${ENV_VARIABLES.S3_BUCKET_NAME}, Key: ${filePath}`);
-    
+
     const command = new GetObjectCommand({
       Bucket: ENV_VARIABLES.S3_BUCKET_NAME,
       Key: filePath,

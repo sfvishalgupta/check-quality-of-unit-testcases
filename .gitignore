@@ -2,7 +2,7 @@
 node_modules/
 OpenRouterAICore*
 reports/
-docs/
+documents/
 coverage/
 dist/
 package-lock.json
@@ -11,3 +11,4 @@ output*
 run.sh
 createtag.sh
 tmp/
+prompt.txt

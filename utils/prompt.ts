@@ -14,12 +14,19 @@ export function getSystemPrompt(systemPromptPath: string): Promise<string> {
 /** 
  * This function is the entry point for the OpenRouterAI example.
  */
-export function getUserPrompt(userPromptPath: string): Promise<string> {
-    logger.info("Reading User Prompt file from:- " + userPromptPath);
-    if (!fs.existsSync(userPromptPath)) {
-        throw new Error(`User prompt file not found at ${userPromptPath}`);
+export async function getUserPrompt(): Promise<string> {
+    logger.info("Reading User Prompt file from:- " + ENV_VARIABLES.USE_FOR);
+    let filePath = process.cwd() + '/' + ENV_VARIABLES.USE_FOR + '.txt';
+    if (ENV_VARIABLES.USE_FOR.toUpperCase().indexOf("S3") > -1) {
+        logger.info("User Prompt from: S3");
+        filePath = await downloadFileFromS3("tmp", ENV_VARIABLES.USE_FOR + '.txt');
+    } else {
+        logger.info("User Prompt from: local");
     }
-    return getDocumentContent(userPromptPath);
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`User prompt file not found at ${filePath}`);
+    }
+    return getDocumentContent(filePath);
 }
 
 export async function getProjectDocument(): Promise<string> {
@@ -27,12 +34,16 @@ export async function getProjectDocument(): Promise<string> {
     const projectDocumentPath: string = ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
     const listOfFiles: string[] = projectDocumentPath.split(",");
     for (let filepath of listOfFiles) {
-        let localFilePath: string = process.cwd() + "/" + filepath;
-        logger.info("Project Document is in :" + ENV_VARIABLES.PROJECT_DOCUMENTS);
-        if (ENV_VARIABLES.PROJECT_DOCUMENTS.toUpperCase() == "S3") {
-            localFilePath = await downloadFileFromS3(filepath);
+        const trimmedFilepath = filepath.trim();
+        let localFilePath: string = process.cwd() + "/" + trimmedFilepath;
+        if (trimmedFilepath.toUpperCase().indexOf("S3") > -1) {
+            logger.info("Project Document is in : S3");
+            localFilePath = await downloadFileFromS3("tmp", trimmedFilepath);
             logger.info(`Downloaded project document from S3: ${localFilePath}`);
+        } else {
+            logger.info("Project Document is in : Local");
         }
+
         if (!fs.existsSync(localFilePath)) {
             throw new Error(
                 `Project document file not found at ${localFilePath}`,

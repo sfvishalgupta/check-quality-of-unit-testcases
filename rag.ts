@@ -9,8 +9,9 @@ import {
 } from "./utils/prompt";
 import { logger } from "./OpenRouterAICore/pino";
 
-async function main(): Promise<void> {
+async function main(): Promise<string> {
     const outputFilePath = process.cwd() + "/" + ENV_VARIABLES.OUTPUT_FILE;
+    let response = "";
     try {
         if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === "") {
             throw new Error(
@@ -26,10 +27,7 @@ async function main(): Promise<void> {
             projectDocument
         );
 
-        let userPrompt: string = await getUserPrompt(
-            __dirname + "/prompts/" + ENV_VARIABLES.USE_FOR + ".txt"
-        );
-
+        let userPrompt: string = await getUserPrompt();
         userPrompt = userPrompt.replace("##PLACEHOLDER##", jiraTitle.replace('{', ''));
 
         const reportFileContent = await getReportFileContent(
@@ -41,29 +39,36 @@ async function main(): Promise<void> {
 
         fs.writeFileSync("prompt.txt", userPrompt);
         logger.info(`Getting Response from URL :- ${ENV_VARIABLES.OPEN_ROUTER_API_URL}`);
-        logger.info(`Getting Response Model :- ${ENV_VARIABLES.OPEN_ROUTER_MODEL}`);
-        const response = await store.generate(
-            ENV_VARIABLES.JIRA_PROJECT_KEY + "-index",
-            userPrompt
-        );
+        const modelNames = ENV_VARIABLES.OPEN_ROUTER_MODEL.split(",");
+        for (const modelName of modelNames) {
+            logger.info(`Getting Response Model :- ${modelName}`);
+            response += `# Response Model:- ${modelName} \n`
+            response += await store.generate(
+                modelName.trim(),
+                ENV_VARIABLES.JIRA_PROJECT_KEY + "-index",
+                userPrompt
+            );
+            response+= "\n\n\n =================================\n";
+        }
 
         if (response) {
             console.log(response);
             logger.info(`✅ Writing response to file: ${outputFilePath}`);
             fs.writeFileSync(outputFilePath, response, "utf8");
-            return response;
         }
     } catch (error) {
-        let response = null;
         if (error instanceof Error) {
-            response = `❌ Action failed: ${error.message}`; 
-            logger.error(`❌ Action failed: ${error.message}`);
+            response = `❌ Action failed: ${error.message}`;
         } else {
-            response = `❌ Action failed: ${String(error)}`; 
+            response = `❌ Action failed: ${String(error)}`;
         }
         fs.writeFileSync(outputFilePath, response, "utf8");
         logger.error(response);
+    } finally {
+        // Do not return from finally block
     }
+
+    return response;
 }
 
 main();
