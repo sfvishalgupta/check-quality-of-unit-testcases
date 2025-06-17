@@ -5,6 +5,7 @@ import { logger } from "../OpenRouterAICore/pino";
 
 export async function downloadFileFromS3(filePath: string): Promise<string> {
   try {
+    filePath = filePath.replace('s3://', '');
     if (!fs.existsSync(process.cwd() + "/tmp")) {
       fs.mkdirSync(process.cwd() + "/tmp");
     }

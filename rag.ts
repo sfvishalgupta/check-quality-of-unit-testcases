@@ -2,16 +2,16 @@ import fs from "fs";
 import { GetJiraTitle } from "./utils/jira";
 import { ENV_VARIABLES } from "./environment";
 import { GetStore } from "./OpenRouterAICore/store/utils";
-import { 
-    getUserPrompt, 
-    getProjectDocument, 
-    getReportFileContent 
+import {
+    getUserPrompt,
+    getProjectDocument,
+    getReportFileContent
 } from "./utils/prompt";
 import { logger } from "./OpenRouterAICore/pino";
 
 async function main(): Promise<void> {
+    const outputFilePath = process.cwd() + "/" + ENV_VARIABLES.OUTPUT_FILE;
     try {
-        logger.info("Hello, World! 👋 from github action");
         if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === "") {
             throw new Error(
                 "Please provide a valid report file path in the environment variables.",
@@ -40,6 +40,8 @@ async function main(): Promise<void> {
         userPrompt = userPrompt.split('}').join('');
 
         fs.writeFileSync("prompt.txt", userPrompt);
+        logger.info(`Getting Response from URL :- ${ENV_VARIABLES.OPEN_ROUTER_API_URL}`);
+        logger.info(`Getting Response Model :- ${ENV_VARIABLES.OPEN_ROUTER_MODEL}`);
         const response = await store.generate(
             ENV_VARIABLES.JIRA_PROJECT_KEY + "-index",
             userPrompt
@@ -47,17 +49,20 @@ async function main(): Promise<void> {
 
         if (response) {
             console.log(response);
-            const outputFilePath = process.cwd() + "/" + ENV_VARIABLES.OUTPUT_FILE;
-            logger.info(`Writing response to file: ${outputFilePath}`);
+            logger.info(`✅ Writing response to file: ${outputFilePath}`);
             fs.writeFileSync(outputFilePath, response, "utf8");
             return response;
         }
     } catch (error) {
+        let response = null;
         if (error instanceof Error) {
+            response = `❌ Action failed: ${error.message}`; 
             logger.error(`❌ Action failed: ${error.message}`);
         } else {
-            logger.error(`❌ Action failed: ${String(error)}`);
+            response = `❌ Action failed: ${String(error)}`; 
         }
+        fs.writeFileSync(outputFilePath, response, "utf8");
+        logger.error(response);
     }
 }
 

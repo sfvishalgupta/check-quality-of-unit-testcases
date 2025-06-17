@@ -4,6 +4,7 @@ inputs:
   USE_FOR:
     description: "The type of test to use for quality checking."
     default: "GenerateTestCasesReport_API"
+    required: false
   AI_PROVIDER:
     description: "The AI provider to use for generating test cases."
     required: true
@@ -20,11 +21,11 @@ inputs:
     required: true
   JIRA_FETCH_FIELDS:
     description: "Fields to fetch from JIRA."
-    required: true
+    required: false
     default: "summary,description,customfield_10000"
   JIRA_MAX_RESULT:
     description: "Maximum number of results to fetch from JIRA."
-    required: true
+    required: false
     default: "100"
   JIRA_PROJECT_KEY:
     description: "The JIRA project key to filter issues."
@@ -37,26 +38,16 @@ inputs:
   OPEN_ROUTER_API_KEY:
     description: "The OpenRouter API key for authentication."
   OPEN_ROUTER_API_URL:
+    required: false
     description: "The OpenRouter API URL."
-    default: "https://api.openrouter.ai/v1"
+    default: "https://openrouter.ai/api/v1"
   OPEN_ROUTER_MODEL:
     description: "The OpenRouter model to use for generating test cases."
     default: "openrouter-ai-model" # Replace with your actual model name
-  GEMINI_API_KEY:
-    description: "The Gemini API key for authentication."
-    required: false
-  GEMINI_API_URL:
-    description: "The Gemini API URL."
-    required: false
-    default: "https://gemini.googleapis.com/v1"
   REPORT_FILE_PATH:
     description: "The file path to save the report."
     required: false
-    default: ""
-  PROJECT_DOCUMENT_PATH:
-    description: "The path to the project documentation."
-    required: false
-    default: "" # Adjust as necessary
+    default: "coverage/ut-results.json"
   GITHUB_TOKEN:
     description: "GitHub token for authentication."
     required: true
@@ -73,10 +64,6 @@ inputs:
     description: "The Docker password for authentication."
     required: true
     default: ""
-  WITH_RAG:
-    description: "Whether to use RAG (Retrieval-Augmented Generation) for generating test cases."
-    required: false
-    default: "false" # Set to 'false' if you do not want to use RAG
   AWS_ACCESS_KEY:
     description: "AWS Access Key for authentication."
     required: false
@@ -93,10 +80,14 @@ inputs:
     description: "AWS S3 bucket name for storing reports."
     required: false
     default: "" # Adjust as necessary
-  PROJECT_DOCUMENTS:
-    description: "Comma-separated list of project document paths to include in the report."
+  PROJECT_DOCUMENT_PATH:
+    description: "The path to the project documentation."
     required: false
     default: "" # Adjust as necessary
+  PROJECT_DOCUMENTS:
+    description: "Location of Project Documents"
+    required: false
+    default: "S3" # Adjust as necessary
   S3_BUCKET_NAME:
     description: "The name of the S3 bucket to store the report."
     required: false
@@ -128,59 +119,11 @@ runs:
             cd OpenRouterAICore && npm install && cd .. && npm install
         fi
 
-    # - name: Run Node.js logic
-    #   id: run-get-ut-test-cases-open-router-ai
-    #   shell: bash
-    #   env:
-    #     USE_FOR: ${{ inputs.USE_FOR }}
-    #     AI_PROVIDER: ${{ inputs.AI_PROVIDER }}
-    #     JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
-    #     JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}
-    #     JIRA_EMAIL: ${{inputs.JIRA_EMAIL}}
-    #     JIRA_FETCH_FIELDS: ${{inputs.JIRA_FETCH_FIELDS}}
-    #     JIRA_MAX_RESULT: ${{inputs.JIRA_MAX_RESULT}}
-    #     JIRA_PROJECT_KEY: ${{inputs.JIRA_PROJECT_KEY}}
-    #     JIRA_URL: ${{inputs.JIRA_URL}}
-    #     OPEN_ROUTER_API_KEY: ${{inputs.OPEN_ROUTER_API_KEY}}
-    #     OPEN_ROUTER_API_URL: ${{inputs.OPEN_ROUTER_API_URL}}
-    #     OPEN_ROUTER_MODEL: ${{inputs.OPEN_ROUTER_MODEL}}
-    #     GEMINI_API_KEY: ${{inputs.GEMINI_API_KEY || '' }}
-    #     GEMINI_API_URL: ${{inputs.GEMINI_API_URL || '' }}
-    #     REPORT_FILE_PATH: ${{ inputs.REPORT_FILE_PATH || '' }}
-    #     PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
-    #     GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
-    #     GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-    #     OUTPUT_FILE: "output-${{env.TIMESTAMP}}.txt"
-    #     AWS_ACCESS_KEY: ${{ inputs.AWS_ACCESS_KEY || '' }}
-    #     AWS_SECRET_KEY: ${{ inputs.AWS_SECRET_KEY || '' }}
-    #     AWS_REGION: ${{ inputs.AWS_REGION || 'us-east-1' }}
-    #     AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
-    #     PROJECT_DOCUMENTS: ${{ inputs.PROJECT_DOCUMENTS || '' }}
-    #     S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
-    #   run: |
-    #     touch output-${{env.TIMESTAMP}}.txt
-    #     npx ts-node ${{ github.action_path }}/index.ts
-    #     content=$(cat output-${{env.TIMESTAMP}}.txt)
-    #     echo "comment_body<<EOF" >> $GITHUB_OUTPUT
-    #     echo "$content" >> $GITHUB_OUTPUT
-    #     echo "EOF" >> $GITHUB_OUTPUT
-
-    # - name: Comment on PR ${{ inputs.AI_PROVIDER }} Output
-    #   uses: peter-evans/create-or-update-comment@v4
-    #   with:
-    #     token: ${{ inputs.GITHUB_TOKEN }}
-    #     issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
-    #     body: |
-    #       📝 Script output via ${{ inputs.AI_PROVIDER }}:
-    #       ${{ steps.run-get-ut-test-cases-open-router-ai.outputs.comment_body }}
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      if: ${{ inputs.WITH_RAG != 'false' }}
 
     - name: docker login
       shell: bash
-      if: ${{ inputs.WITH_RAG != 'false' }}
       run: |
         echo "Port 6333 is not open"
         sudo docker login -u "${{inputs.DOCKER_USERNAME}}" -p "${{inputs.DOCKER_PASSWORD}}" docker.io
@@ -204,8 +147,6 @@ runs:
         OPEN_ROUTER_API_KEY: ${{inputs.OPEN_ROUTER_API_KEY}}
         OPEN_ROUTER_API_URL: ${{inputs.OPEN_ROUTER_API_URL}}
         OPEN_ROUTER_MODEL: ${{inputs.OPEN_ROUTER_MODEL}}
-        GEMINI_API_KEY: ${{inputs.GEMINI_API_KEY || '' }}
-        GEMINI_API_URL: ${{inputs.GEMINI_API_URL || '' }}
         REPORT_FILE_PATH: ${{ inputs.REPORT_FILE_PATH || '' }}
         PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
         GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
@@ -219,7 +160,6 @@ runs:
         AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
         PROJECT_DOCUMENTS: ${{ inputs.PROJECT_DOCUMENTS || '' }}
         S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
-      if: ${{ inputs.WITH_RAG != 'false' }}
       run: |
         touch output-rag-${{env.TIMESTAMP}}.txt
         npx ts-node ${{ github.action_path }}/rag.ts
@@ -230,10 +170,9 @@ runs:
 
     - name: Comment on PR ${{ inputs.AI_PROVIDER }} Output RAG
       uses: peter-evans/create-or-update-comment@v4
-      if: ${{ inputs.WITH_RAG != 'false' }}
       with:
         token: ${{ inputs.GITHUB_TOKEN }}
         issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
         body: |
-          📝 Script output via ${{ inputs.AI_PROVIDER }} RAG:
+          📝 Script output via ${{ inputs.AI_PROVIDER }}:
           ${{ steps.run-get-ut-test-cases-open-router-ai-rag.outputs.comment_body }}
