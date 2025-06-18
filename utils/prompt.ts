@@ -2,6 +2,7 @@ import fs from "fs";
 import { getDocumentContent } from "../OpenRouterAICore/utils";
 import { ENV_VARIABLES } from "../environment";
 import { downloadFileFromS3 } from "./S3Util";
+import { downloadFileFromConfluence } from "./confluenceUtil";
 import { logger } from "../OpenRouterAICore/pino";
 
 export function getSystemPrompt(systemPromptPath: string): Promise<string> {
@@ -40,6 +41,9 @@ export async function getProjectDocument(): Promise<string> {
             logger.info("Project Document is in : S3");
             localFilePath = await downloadFileFromS3("tmp", trimmedFilepath);
             logger.info(`Downloaded project document from S3: ${localFilePath}`);
+        } else if (trimmedFilepath.toUpperCase().indexOf("CONFLUENCE") > -1) {
+            console.log("Read From Confluence");
+            localFilePath = await downloadFileFromConfluence("tmp", trimmedFilepath);
         } else {
             logger.info("Project Document is in : Local");
         }
