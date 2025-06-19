@@ -114,50 +114,54 @@ runs:
       run: |
         echo "Port 6333 is not open"
         sudo docker login -u "${{inputs.DOCKER_USERNAME}}" -p "${{inputs.DOCKER_PASSWORD}}" docker.io
-        docker run -d -p 6333:6333 qdrant/qdrant > /dev/null
+        docker pull mcr.microsoft.com/presidio-analyzer:latest
+        docker pull mcr.microsoft.com/presidio-anonymizer:latest
+        
+        docker run -d -p 5001:3000 mcr.microsoft.com/presidio-anonymizer:latest
+        docker run -d -p 5002:3000 mcr.microsoft.com/presidio-analyzer:latest
+        docker run -d -p 6333:6333 qdrant/qdrant
         docker ps
-        curl http://127.0.0.1:6333/
 
-    - name: Run Node.js logic
-      id: run-get-ut-test-cases-open-router-ai
-      shell: bash
-      env:
-        USE_FOR: ${{ inputs.USE_FOR }}
-        JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
-        JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}
-        JIRA_EMAIL: ${{inputs.JIRA_EMAIL}}
-        JIRA_FETCH_FIELDS: ${{inputs.JIRA_FETCH_FIELDS}}
-        JIRA_MAX_RESULT: ${{inputs.JIRA_MAX_RESULT}}
-        JIRA_PROJECT_KEY: ${{inputs.JIRA_PROJECT_KEY}}
-        JIRA_URL: ${{inputs.JIRA_URL}}
-        OPEN_ROUTER_API_KEY: ${{inputs.OPEN_ROUTER_API_KEY}}
-        OPEN_ROUTER_API_URL: ${{inputs.OPEN_ROUTER_API_URL}}
-        OPEN_ROUTER_MODEL: ${{inputs.OPEN_ROUTER_MODEL}}
-        REPORT_FILE_PATH: ${{ inputs.REPORT_FILE_PATH || '' }}
-        PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
-        GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
-        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-        OUTPUT_FILE: "output-${{env.TIMESTAMP}}.txt"
-        VECTOR_STORE_TYPE: "QDRANT"
-        VECTOR_STORE_URL: "http://127.0.0.1:6333"
-        AWS_ACCESS_KEY: ${{ inputs.AWS_ACCESS_KEY || '' }}
-        AWS_SECRET_KEY: ${{ inputs.AWS_SECRET_KEY || '' }}
-        AWS_REGION: ${{ inputs.AWS_REGION || 'us-east-1' }}
-        AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
-        S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
-      run: |
-        touch output-${{env.TIMESTAMP}}.txt
-        npx ts-node ${{ github.action_path }}/rag.ts
-        content=$(cat output-${{env.TIMESTAMP}}.txt)
-        echo "comment_body<<EOF" >> $GITHUB_OUTPUT
-        echo "$content" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+    # - name: Run Node.js logic
+    #   id: run-get-ut-test-cases-open-router-ai
+    #   shell: bash
+    #   env:
+    #     USE_FOR: ${{ inputs.USE_FOR }}
+    #     JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
+    #     JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}
+    #     JIRA_EMAIL: ${{inputs.JIRA_EMAIL}}
+    #     JIRA_FETCH_FIELDS: ${{inputs.JIRA_FETCH_FIELDS}}
+    #     JIRA_MAX_RESULT: ${{inputs.JIRA_MAX_RESULT}}
+    #     JIRA_PROJECT_KEY: ${{inputs.JIRA_PROJECT_KEY}}
+    #     JIRA_URL: ${{inputs.JIRA_URL}}
+    #     OPEN_ROUTER_API_KEY: ${{inputs.OPEN_ROUTER_API_KEY}}
+    #     OPEN_ROUTER_API_URL: ${{inputs.OPEN_ROUTER_API_URL}}
+    #     OPEN_ROUTER_MODEL: ${{inputs.OPEN_ROUTER_MODEL}}
+    #     REPORT_FILE_PATH: ${{ inputs.REPORT_FILE_PATH || '' }}
+    #     PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
+    #     GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
+    #     GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+    #     OUTPUT_FILE: "output-${{env.TIMESTAMP}}.txt"
+    #     VECTOR_STORE_TYPE: "QDRANT"
+    #     VECTOR_STORE_URL: "http://127.0.0.1:6333"
+    #     AWS_ACCESS_KEY: ${{ inputs.AWS_ACCESS_KEY || '' }}
+    #     AWS_SECRET_KEY: ${{ inputs.AWS_SECRET_KEY || '' }}
+    #     AWS_REGION: ${{ inputs.AWS_REGION || 'us-east-1' }}
+    #     AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
+    #     S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
+    #   run: |
+    #     touch output-${{env.TIMESTAMP}}.txt
+    #     npx ts-node ${{ github.action_path }}/rag.ts
+    #     content=$(cat output-${{env.TIMESTAMP}}.txt)
+    #     echo "comment_body<<EOF" >> $GITHUB_OUTPUT
+    #     echo "$content" >> $GITHUB_OUTPUT
+    #     echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Comment on PR Output
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        token: ${{ inputs.GITHUB_TOKEN }}
-        issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
-        body: |
-          📝 Script output:
-          ${{ steps.run-get-ut-test-cases-open-router-ai.outputs.comment_body }}
+    # - name: Comment on PR Output
+    #   uses: peter-evans/create-or-update-comment@v4
+    #   with:
+    #     token: ${{ inputs.GITHUB_TOKEN }}
+    #     issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
+    #     body: |
+    #       📝 Script output:
+    #       ${{ steps.run-get-ut-test-cases-open-router-ai.outputs.comment_body }}

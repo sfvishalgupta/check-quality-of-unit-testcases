@@ -4,16 +4,6 @@ import path from "path";
 import { ConfluenceSearchTool } from "../OpenRouterAICore/tools/confluenceSearchTool";
 import { logger } from "../OpenRouterAICore/pino";
 
-function stripHtmlTags(htmlString: string): string {
-    return htmlString.replace(/<[^>]*>/g, '')
-        .replace(/https?:\/\/\S+/g, '')
-        .split('\n\n').join('\n')
-        .split('\n\n').join('\n')
-        .split('{').join('')
-        .split('}').join('')
-        .split('@sourcefuse.com').join('');
-}
-
 export async function downloadFileFromConfluence(folder: string, filePath: string): Promise<string> {
     try {
         filePath = filePath.replace('confluence://', '');
@@ -30,7 +20,7 @@ export async function downloadFileFromConfluence(folder: string, filePath: strin
             content += page.title + '\n';
             content += page.body.storage.value;
         }
-        fs.writeFileSync(outputFile, stripHtmlTags(content));
+        fs.writeFileSync(outputFile, content);
         return outputFile;
 
     } catch (error) {
