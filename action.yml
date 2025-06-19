@@ -1,18 +1,13 @@
-name: "Test Quality Checker"
+name: "Test Quality Checker via AI"
 description: "A GitHub Action to check the quality of unit test cases via OpenRouterAI/Gemini."
 inputs:
   USE_FOR:
     description: "The type of test to use for quality checking."
     default: "GenerateTestCasesReport_API"
     required: false
-  AI_PROVIDER:
-    description: "The AI provider to use for generating test cases."
-    required: true
-    default: "Test" # or 'GEMINI' based on your preference
   JIRA_TICKET_ID:
     description: "The JIRA ticket ID for tracking issues."
     required: true
-    default: "BMSAAS"
   JIRA_API_TOKEN:
     description: "The JIRA API token for authentication."
     required: true
@@ -51,19 +46,15 @@ inputs:
   GITHUB_TOKEN:
     description: "GitHub token for authentication."
     required: true
-    default: ""
   GITHUB_ISSUE_NUMBER:
     description: "The GitHub issue number to link the report."
     required: true
-    default: "" # Optional, can be set to link the report to a specific issue
   DOCKER_USERNAME:
     description: "The Docker username for authentication."
     required: true
-    default: ""
   DOCKER_PASSWORD:
     description: "The Docker password for authentication."
     required: true
-    default: ""
   AWS_ACCESS_KEY:
     description: "AWS Access Key for authentication."
     required: false
@@ -123,16 +114,18 @@ runs:
       run: |
         echo "Port 6333 is not open"
         sudo docker login -u "${{inputs.DOCKER_USERNAME}}" -p "${{inputs.DOCKER_PASSWORD}}" docker.io
-        docker run -d -p 6333:6333 qdrant/qdrant > /dev/null
-        docker ps
-        curl http://127.0.0.1:6333/
+        docker pull mcr.microsoft.com/presidio-analyzer:latest
+        docker pull mcr.microsoft.com/presidio-anonymizer:latest
+        
+        docker run -d -p 5001:3000 mcr.microsoft.com/presidio-anonymizer:latest
+        docker run -d -p 5002:3000 mcr.microsoft.com/presidio-analyzer:latest
+        docker run -d -p 6333:6333 qdrant/qdrant
 
-    - name: Run Node.js logic via RAG
-      id: run-get-ut-test-cases-open-router-ai-rag
+    - name: Run Node.js logic
+      id: run-get-ut-test-cases-open-router-ai
       shell: bash
       env:
         USE_FOR: ${{ inputs.USE_FOR }}
-        AI_PROVIDER: ${{ inputs.AI_PROVIDER }}
         JIRA_TICKET_ID: ${{ inputs.JIRA_TICKET_ID }}
         JIRA_API_TOKEN: ${{ inputs.JIRA_API_TOKEN }}
         JIRA_EMAIL: ${{inputs.JIRA_EMAIL}}
@@ -147,27 +140,30 @@ runs:
         PROJECT_DOCUMENT_PATH: ${{ inputs.PROJECT_DOCUMENT_PATH || '' }}
         GITHUB_ISSUE_NUMBER: ${{ inputs.GITHUB_ISSUE_NUMBER || 'main' }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-        OUTPUT_FILE: "output-rag-${{env.TIMESTAMP}}.txt"
+        OUTPUT_FILE: "output-${{env.TIMESTAMP}}.txt"
         VECTOR_STORE_TYPE: "QDRANT"
-        VECTOR_STORE_URL: "http://127.0.0.1:6333"
         AWS_ACCESS_KEY: ${{ inputs.AWS_ACCESS_KEY || '' }}
         AWS_SECRET_KEY: ${{ inputs.AWS_SECRET_KEY || '' }}
         AWS_REGION: ${{ inputs.AWS_REGION || 'us-east-1' }}
         AWS_S3_BUCKET: ${{ inputs.AWS_S3_BUCKET || '' }}
         S3_BUCKET_NAME: ${{ inputs.S3_BUCKET_NAME || '' }}
+        VECTOR_STORE_URL: "http://127.0.0.1:6333"
+        PRESIDIO_ANONYMIZE_URL: "http://localhost:5001/anonymize"
+        PRESIDIO_ANALYZE_URL: "http://localhost:5002/analyze"
+
       run: |
-        touch output-rag-${{env.TIMESTAMP}}.txt
+        touch output-${{env.TIMESTAMP}}.txt
         npx ts-node ${{ github.action_path }}/rag.ts
-        content=$(cat output-rag-${{env.TIMESTAMP}}.txt)
+        content=$(cat output-${{env.TIMESTAMP}}.txt)
         echo "comment_body<<EOF" >> $GITHUB_OUTPUT
         echo "$content" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Comment on PR ${{ inputs.AI_PROVIDER }} Output RAG
+    - name: Comment on PR Output
       uses: peter-evans/create-or-update-comment@v4
       with:
         token: ${{ inputs.GITHUB_TOKEN }}
         issue-number: ${{ inputs.GITHUB_ISSUE_NUMBER }}
         body: |
-          📝 Script output via ${{ inputs.AI_PROVIDER }}:
-          ${{ steps.run-get-ut-test-cases-open-router-ai-rag.outputs.comment_body }}
+          📝 Script output:
+          ${{ steps.run-get-ut-test-cases-open-router-ai.outputs.comment_body }}

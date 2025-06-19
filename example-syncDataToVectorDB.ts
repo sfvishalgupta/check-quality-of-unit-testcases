@@ -1,19 +1,17 @@
-import path from "path";
-import { getDocumentContent } from "./OpenRouterAICore/utils";
-import { GetStore } from "./OpenRouterAICore/store/utils";
+import { GetStore } from './OpenRouterAICore/store/utils';
+import { getProjectDocument } from './utils/prompt';
 
 async function main() {
     const [pdfPath, indexName] = process.argv.slice(2);
 
     if (!pdfPath || !indexName) {
-        console.error("Usage: npx ts-node example-syncDataToVectorDB.ts <pdfPath> <index_name>");
+        console.error('Usage: npx ts-node example-syncDataToVectorDB.ts <pdfPath> <index_name>');
         process.exit(1);
     }
 
     try {
         const store = GetStore();
-        const absolutePdfPath = path.resolve(__dirname, pdfPath);
-        const text = await getDocumentContent(absolutePdfPath);
+        const text = await getProjectDocument(pdfPath);
         await store.addDocument(indexName, text);
         console.log(`Document added to index "${indexName}" successfully.`);
     } catch (error) {
