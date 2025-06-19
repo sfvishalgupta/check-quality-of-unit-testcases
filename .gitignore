@@ -12,3 +12,4 @@ run.sh
 createtag.sh
 tmp/
 prompt.txt
+.env.*

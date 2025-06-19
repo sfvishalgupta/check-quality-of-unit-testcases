@@ -1,6 +1,7 @@
-import path from "path";
-import { getDocumentContent } from "./OpenRouterAICore/utils";
 import { GetStore } from "./OpenRouterAICore/store/utils";
+import {
+    getProjectDocument,
+} from "./utils/prompt";
 
 async function main() {
     const [pdfPath, indexName] = process.argv.slice(2);
@@ -12,8 +13,7 @@ async function main() {
 
     try {
         const store = GetStore();
-        const absolutePdfPath = path.resolve(__dirname, pdfPath);
-        const text = await getDocumentContent(absolutePdfPath);
+        const text = await getProjectDocument(pdfPath);
         await store.addDocument(indexName, text);
         console.log(`Document added to index "${indexName}" successfully.`);
     } catch (error) {
