@@ -30,9 +30,9 @@ export async function getUserPrompt(): Promise<string> {
     return getDocumentContent(filePath);
 }
 
-export async function getProjectDocument(): Promise<string> {
+export async function getProjectDocument(projectDocumentPath?: string): Promise<string> {
     let content: string = "";
-    const projectDocumentPath: string = ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
+    projectDocumentPath = projectDocumentPath ?? ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
     const listOfFiles: string[] = projectDocumentPath.split(",");
     for (let filepath of listOfFiles) {
         const trimmedFilepath = filepath.trim();
@@ -42,10 +42,10 @@ export async function getProjectDocument(): Promise<string> {
             localFilePath = await downloadFileFromS3("tmp", trimmedFilepath);
             logger.info(`Downloaded project document from S3: ${localFilePath}`);
         } else if (trimmedFilepath.toUpperCase().indexOf("CONFLUENCE") > -1) {
-            console.log("Read From Confluence");
+            logger.info(`Downloaded project document from Confluence: ${trimmedFilepath}`);
             localFilePath = await downloadFileFromConfluence("tmp", trimmedFilepath);
         } else {
-            logger.info("Project Document is in : Local");
+            logger.info(`Project Document is in : Local ${localFilePath}`);
         }
 
         if (!fs.existsSync(localFilePath)) {
