@@ -1,5 +1,4 @@
 export interface Inputs {
-  AI_PROVIDER: string;
   JIRA_API_TOKEN: string;
   JIRA_EMAIL: string;
   JIRA_FETCH_FIELDS: string;

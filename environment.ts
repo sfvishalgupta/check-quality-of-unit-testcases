@@ -1,12 +1,22 @@
 import fs from "fs";
 import { config } from "dotenv";
+import { logger } from "OpenRouterAICore/pino"
+
 
 if (fs.existsSync(".env")) {
+  logger.info("Loading env file from .env");
   config({ path: ".env" });
 }
 
+if (process.env.NODE_ENV != "" && fs.existsSync(`.env.${process.env.NODE_ENV}`)) {
+  logger.info(`Loading env file from .env.${process.env.NODE_ENV}`);
+  config({ path: `.env.${process.env.NODE_ENV}` });
+} else {
+  logger.info(`stage not set.`);
+}
+
+
 export const ENV_VARIABLES = {
-  AI_PROVIDER: process.env.AI_PROVIDER ?? "",
   JIRA_API_TOKEN: process.env.JIRA_API_TOKEN ?? "",
   JIRA_EMAIL: process.env.JIRA_EMAIL ?? "",
   JIRA_FETCH_FIELDS: process.env.JIRA_FETCH_FIELDS ?? "",
@@ -25,8 +35,4 @@ export const ENV_VARIABLES = {
   OUTPUT_FILE: process.env.OUTPUT_FILE ?? "output.md",
   USE_FOR: process.env.USE_FOR ?? "GenerateTestCasesReport_API",
   VECTOR_DB_COLLECTION_NAME: process.env.VECTOR_DB_COLLECTION_NAME ?? "test_cases",
-  AWS_REGION: process.env.AWS_REGION ?? "ap-south-1",
-  AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY ?? "",
-  AWS_SECRET_KEY: process.env.AWS_SECRET_KEY ?? "",
-  S3_BUCKET_NAME: process.env.S3_BUCKET_NAME ?? "",
 };
