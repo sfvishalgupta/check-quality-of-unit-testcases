@@ -15,10 +15,47 @@
  * @returns {Promise<string>} The aggregated response from all models, or an error message.
  */
 import fs from 'fs';
-import { GetJiraTitle, GetUserPrompt, GetProjectDocument, GetReportFileContent } from './utils';
+import { GetJiraTitle, GetUserPrompt, GetProjectDocument, GetReportFileContent, GetPullRequestDiff } from './utils';
 import { ENV_VARIABLES } from './environment';
 import { GetStore } from './OpenRouterAICore/store/utils';
 import { logger } from './OpenRouterAICore/pino';
+import { ConfluenceCreatePageTool } from './OpenRouterAICore/tools'
+
+async function parseReportFile(): Promise<string> {
+    const filteredFiles: string[] = [];
+    const files: string[] = await GetPullRequestDiff();
+    files.forEach((k) => {
+        filteredFiles.push(k.replace('src', 'dist').replace('.ts', ''));
+    });
+    let reportFileContent: string = await GetReportFileContent(process.cwd() + '/' + ENV_VARIABLES.REPORT_FILE_PATH);
+    if (filteredFiles.length > 0) {
+        try {
+            const reportFileJson = JSON.parse(reportFileContent);
+            const d = Object.keys(reportFileJson);
+            let rFiles: string[] = [];
+            let returnContent: { [key: string]: string } = {};
+            filteredFiles.forEach((key) => {
+                console.log(key);
+                const dfile = d.filter((file) => file.indexOf(key) > -1);
+                rFiles = [...rFiles, ...dfile];
+            });
+            d.forEach((filePath) => {
+                if (rFiles.indexOf(filePath) > -1) {
+                    const newFilePath: string = filePath.split('/').pop() || '';
+                    returnContent[newFilePath] = reportFileJson[filePath];
+                }
+            });
+
+            if (Object.keys(returnContent).length > 0) {
+                reportFileContent = JSON.stringify(returnContent, null, 2);
+            }
+        } catch (e) {
+            logger.error('Error in parsing Report', String(e));
+            console.log(e);
+        }
+    }
+    return reportFileContent;
+}
 
 async function main(): Promise<string> {
     const outputFilePath = process.cwd() + '/' + ENV_VARIABLES.OUTPUT_FILE;
@@ -33,10 +70,9 @@ async function main(): Promise<string> {
         const store = GetStore();
         await store.addDocument(ENV_VARIABLES.JIRA_PROJECT_KEY + '-index', projectDocument);
 
+        const reportFileContent = await parseReportFile();
         let userPrompt: string = await GetUserPrompt();
         userPrompt = userPrompt.replace('##PLACEHOLDER##', jiraTitle.replace('{', ''));
-
-        const reportFileContent = await GetReportFileContent(process.cwd() + '/' + ENV_VARIABLES.REPORT_FILE_PATH);
         userPrompt = userPrompt.replace('##REPORT##', reportFileContent);
         userPrompt = userPrompt.split('{').join('');
         userPrompt = userPrompt.split('}').join('');
@@ -53,6 +89,15 @@ async function main(): Promise<string> {
 
         if (response) {
             console.log(response);
+            await ConfluenceCreatePageTool(
+                ENV_VARIABLES.JIRA_SPACE_KEY_OUTPUT
+            ).func(
+                '# For:-' + ENV_VARIABLES.USE_FOR + '\n' +
+                response
+            ).catch(e => {
+                logger.info(e.message);
+            });
+
             logger.info(`✅ Writing response to file: ${outputFilePath}`);
             fs.writeFileSync(outputFilePath, response, 'utf8');
         }
@@ -72,3 +117,7 @@ async function main(): Promise<string> {
 }
 
 main();
+
+
+
+

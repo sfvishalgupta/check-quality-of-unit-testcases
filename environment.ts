@@ -34,4 +34,7 @@ export const ENV_VARIABLES = {
     USE_FOR: process.env.USE_FOR ?? 'GenerateTestCasesReport_API',
     VECTOR_DB_COLLECTION_NAME: process.env.VECTOR_DB_COLLECTION_NAME ?? 'test_cases',
     GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? '',
+    GITHUB_OWNER: process.env.GITHUB_OWNER ?? '',
+    GITHUB_REPO: process.env.GITHUB_REPO ?? '',
+    JIRA_SPACE_KEY_OUTPUT: process.env.JIRA_SPACE_KEY_OUTPUT ?? 'MyTestSpac'
 };
