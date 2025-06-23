@@ -1,17 +1,20 @@
+import { ENV_VARIABLES } from './environment';
 import { GetStore } from './OpenRouterAICore/store/utils';
-import { getProjectDocument } from './utils/prompt';
+import { GetProjectDocument } from './utils';
 
 async function main() {
-    const [pdfPath, indexName] = process.argv.slice(2);
+    let [pdfPath, indexName] = process.argv.slice(2);
 
     if (!pdfPath || !indexName) {
-        console.error('Usage: npx ts-node example-syncDataToVectorDB.ts <pdfPath> <index_name>');
-        process.exit(1);
+        pdfPath = ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
+        indexName = ENV_VARIABLES.JIRA_PROJECT_KEY + '-index';
+        // console.error('Usage: npx ts-node example-syncDataToVectorDB.ts <pdfPath> <index_name>');
+        // process.exit(1);
     }
 
     try {
         const store = GetStore();
-        const text = await getProjectDocument(pdfPath);
+        const text = await GetProjectDocument(pdfPath);
         await store.addDocument(indexName, text);
         console.log(`Document added to index "${indexName}" successfully.`);
     } catch (error) {
