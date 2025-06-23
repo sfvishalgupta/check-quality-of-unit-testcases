@@ -3,7 +3,7 @@ import { getDocumentContent } from '../OpenRouterAICore/utils';
 import { downloadFileFromS3 } from '../OpenRouterAICore/services/S3Service';
 import { logger } from '../OpenRouterAICore/pino';
 import { ENV_VARIABLES } from '../environment';
-import { downloadFileFromConfluence } from './confluenceUtil';
+import { DownloadFileFromConfluence } from './';
 
 export function GetSystemPrompt(systemPromptPath: string): Promise<string> {
     if (!fs.existsSync(systemPromptPath)) {
@@ -31,6 +31,7 @@ export async function GetUserPrompt(): Promise<string> {
 }
 
 export async function GetProjectDocument(projectDocumentPath?: string): Promise<string> {
+    logger.info(`Loading Project document from ${projectDocumentPath}`);
     let content: string = '';
     projectDocumentPath = projectDocumentPath ?? ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
     const listOfFiles: string[] = projectDocumentPath.split(',');
@@ -43,7 +44,7 @@ export async function GetProjectDocument(projectDocumentPath?: string): Promise<
             logger.info(`Downloaded project document from S3: ${localFilePath}`);
         } else if (trimmedFilepath.toUpperCase().indexOf('CONFLUENCE') > -1) {
             logger.info(`Downloaded project document from Confluence: ${trimmedFilepath}`);
-            localFilePath = await downloadFileFromConfluence('tmp', trimmedFilepath);
+            localFilePath = await DownloadFileFromConfluence('tmp', trimmedFilepath);
         } else {
             logger.info(`Project Document is in : Local ${localFilePath}`);
         }

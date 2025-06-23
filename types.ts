@@ -12,3 +12,12 @@ export interface Inputs {
     GEMINI_API_KEY?: string;
     GEMINI_API_URL?: string;
 }
+
+export interface PullRequestFile {
+    filename: string;
+    status: string;
+    additions: number;
+    deletions: number;
+    changes: number;
+    [key: string]: any;
+}

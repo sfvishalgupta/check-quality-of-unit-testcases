@@ -41,7 +41,13 @@ export const GetJiraTitle = async (): Promise<string> => {
         throw new Error('Jira ticket ID or project key is not set in environment variables.');
     }
 
-    const jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
+    let jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
+    const regex = /^([A-Z]+-\d+)/;
+    const match = regex.exec(ENV_VARIABLES.JIRA_TICKET_ID.toString());
+    if (match) {
+        jiraId = match[1];
+    }
+
     const jql: string = `project = '${ENV_VARIABLES.JIRA_PROJECT_KEY}' AND (key = ${jiraId} OR parent = ${jiraId})`;
     logger.info(`JQL: ${jql} `);
 
@@ -55,12 +61,12 @@ export const GetJiraTitle = async (): Promise<string> => {
 
         Jira sub story is below in format of title : description
         ${subIssues
-            .map(
-                (issue) => `
+                .map(
+                    (issue) => `
         - **${issue.fields.summary}**: ${extractParagraphText(issue.fields.description).join('\n')}
         `,
-            )
-            .join('\n')}
+                )
+                .join('\n')}
     `;
         return placeHolder;
     } catch (e) {
