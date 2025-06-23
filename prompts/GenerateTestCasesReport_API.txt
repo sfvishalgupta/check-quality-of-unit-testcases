@@ -34,14 +34,33 @@ From a backend perspective, enumerate all unit test cases that would verify the 
 
 **Step 4 — Output Formatting:**
 Structure your final output using the exact format below:
-```markdown
-## [Jira Title Here] (ID: [JIRA-ID])
-• ✅ Fully covered test cases
-• ⚠️ Partially covered test cases (with missing assertions or scenarios)
-• ❌ Missing test cases
-• 💡 Suggested improvements (if any)
-• 🧮 Final Score: X/10
-```
+---
+
+**FORMAT YOUR OUTPUT EXACTLY LIKE THIS:**
+
+<b>[Jira ID] Jira Story Title</b>
+
+• ✅ <b>Fully covered test cases</b> (count of Fully covered test cases)
+  - ...
+  - ...
+
+• ⚠️ <b>Partially covered test cases</b> (count of Partially covered test cases)
+  - ... (missing XYZ)
+  - ...
+
+• ❌ <b>Missing test cases</b> (count of Missing covered test cases)
+  - ... (should have tested ...)
+  - ...
+
+• 💡 <b>Suggested improvements</b> (count of Missing covered test cases)
+  - ...
+
+<h2> 🧮 Final Score:</h2> <b>X/10</b>
+
+
+🚫 Do NOT include assumptions, meta-comments, or Jira summaries.
+🎯 Focus strictly on the test case extraction and coverage gap analysis.
+
 
 Important Constraints:
 	•	Do not include summaries, explanations, or speculative assumptions.

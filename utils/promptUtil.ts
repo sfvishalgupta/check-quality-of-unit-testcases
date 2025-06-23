@@ -2,14 +2,21 @@ import fs from 'fs';
 import { getDocumentContent } from '../OpenRouterAICore/utils';
 import { downloadFileFromS3 } from '../OpenRouterAICore/services/S3Service';
 import { logger } from '../OpenRouterAICore/pino';
-import { ENV_VARIABLES } from '../environment';
-import { downloadFileFromConfluence } from './confluenceUtil';
+import { CustomError } from '../OpenRouterAICore/customError';
+import { ENV_VARIABLES, ERRORS } from '../environment';
+import { DownloadFileFromConfluence } from './';
 
 export function GetSystemPrompt(systemPromptPath: string): Promise<string> {
     if (!fs.existsSync(systemPromptPath)) {
-        throw new Error(`System prompt file not found at ${systemPromptPath}`);
+        throw new CustomError(ERRORS.FILE_NOT_FOUND, systemPromptPath);
     }
     return getDocumentContent(systemPromptPath);
+}
+
+export function GetSummarizePrompt(): string {
+    return `use this context and give me the summary of the context and 
+give me the output in below format as json with key summary & score, 
+do not include score in summary and score should be string in format <b>x/10</b>.`;
 }
 
 /**
@@ -25,12 +32,15 @@ export async function GetUserPrompt(): Promise<string> {
         logger.info('User Prompt from: local');
     }
     if (!fs.existsSync(filePath)) {
-        throw new Error(`User prompt file not found at ${filePath}`);
+        throw new CustomError(ERRORS.FILE_NOT_FOUND,
+            filePath
+        );
     }
     return getDocumentContent(filePath);
 }
 
 export async function GetProjectDocument(projectDocumentPath?: string): Promise<string> {
+    logger.info(`Loading Project document from ${projectDocumentPath}`);
     let content: string = '';
     projectDocumentPath = projectDocumentPath ?? ENV_VARIABLES.PROJECT_DOCUMENT_PATH;
     const listOfFiles: string[] = projectDocumentPath.split(',');
@@ -43,13 +53,16 @@ export async function GetProjectDocument(projectDocumentPath?: string): Promise<
             logger.info(`Downloaded project document from S3: ${localFilePath}`);
         } else if (trimmedFilepath.toUpperCase().indexOf('CONFLUENCE') > -1) {
             logger.info(`Downloaded project document from Confluence: ${trimmedFilepath}`);
-            localFilePath = await downloadFileFromConfluence('tmp', trimmedFilepath);
+            localFilePath = await DownloadFileFromConfluence('tmp', trimmedFilepath);
         } else {
             logger.info(`Project Document is in : Local ${localFilePath}`);
         }
 
         if (!fs.existsSync(localFilePath)) {
-            throw new Error(`Project document file not found at ${localFilePath}`);
+            throw new CustomError(
+                ERRORS.FILE_NOT_FOUND,
+                localFilePath
+            );
         }
         content += await getDocumentContent(localFilePath);
     }
@@ -59,7 +72,10 @@ export async function GetProjectDocument(projectDocumentPath?: string): Promise<
 export function GetReportFileContent(reportFilePath: string): Promise<any> {
     logger.info('Reading Report file from :- ' + reportFilePath);
     if (!fs.existsSync(reportFilePath)) {
-        throw new Error(`Report file not found at ${reportFilePath}`);
+        throw new CustomError(
+            ERRORS.FILE_NOT_FOUND,
+            reportFilePath
+        );
     }
     return getDocumentContent(reportFilePath);
 }

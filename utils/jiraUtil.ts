@@ -1,7 +1,15 @@
-import { ENV_VARIABLES } from '../environment';
+/**
+ * Extracts text content from the description of a Jira issue.
+ * Traverses the content structure and collects text from all paragraphs.
+ *
+ * @param jiraIssue - The Jira issue object containing the description field.
+ * @returns An array of strings, each representing a paragraph of text extracted from the description.
+ */
+import { ERRORS, ENV_VARIABLES } from '../environment';
 import { JiraSearchTool } from 'OpenRouterAICore/tools';
 import { JiraIssue } from 'OpenRouterAICore/types';
 import { logger } from 'OpenRouterAICore/pino';
+import { CustomError } from 'OpenRouterAICore/customError';
 
 /**
  * This function extracts text from the Jira issue description.
@@ -38,13 +46,16 @@ const extractParagraphText = (jiraIssue: any): string[] => {
  */
 export const GetJiraTitle = async (): Promise<string> => {
     if (!ENV_VARIABLES.JIRA_TICKET_ID || !ENV_VARIABLES.JIRA_PROJECT_KEY) {
-        throw new Error('Jira ticket ID or project key is not set in environment variables.');
+        throw new CustomError(
+            ERRORS.ENV_NOT_SET,
+            'Jira ticket ID or Project key is not set in environment variables.'
+        )
     }
 
-    const jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
+    let jiraId: string = GetJiraId();
+
     const jql: string = `project = '${ENV_VARIABLES.JIRA_PROJECT_KEY}' AND (key = ${jiraId} OR parent = ${jiraId})`;
     logger.info(`JQL: ${jql} `);
-
     try {
         const response: JiraIssue[] = await JiraSearchTool.func(jql);
         const parentIssue: JiraIssue = response.find((issue) => issue.key === jiraId) as JiraIssue;
@@ -55,19 +66,54 @@ export const GetJiraTitle = async (): Promise<string> => {
 
         Jira sub story is below in format of title : description
         ${subIssues
-            .map(
-                (issue) => `
+                .map(
+                    (issue) => `
         - **${issue.fields.summary}**: ${extractParagraphText(issue.fields.description).join('\n')}
         `,
-            )
-            .join('\n')}
+                )
+                .join('\n')}
     `;
         return placeHolder;
     } catch (e) {
-        if (e instanceof Error) {
+        if (typeof e === 'object' && e !== null && 'response' in e) {
+            if ((e as any).response?.status) {
+                throw new CustomError(
+                    ERRORS.INVALID_CREDENTIALS,
+                    'Make sure your Jira credentials (username, password, or API token) are correct and valid'
+                );
+            }
+        } else if (e instanceof Error) {
+            if (e.message.toLowerCase().indexOf('getaddrinfo') > -1) {
+                throw new CustomError(
+                    ERRORS.URL_NOT_FOUND,
+                    'Make sure your Jira url is valid'
+                );
+            }
             throw new Error(`Error found in fetching Jira Details by ID ${jiraId} :- ${e.message}`);
         } else {
+            console.log(2);
             throw new Error(`Error found in fetching Jira Details by ID ${jiraId} :- ${String(e)}`);
         }
     }
+    return '';
 };
+
+
+/**
+ * Extracts and returns the Jira ticket ID from the environment variable `JIRA_TICKET_ID`.
+ *
+ * The function attempts to match the Jira ticket ID using the pattern `PROJECT-123` (uppercase letters, hyphen, digits).
+ * If a match is found, it returns the matched Jira ticket ID; otherwise, it returns the original value of `JIRA_TICKET_ID`.
+ *
+ * @returns {string} The extracted Jira ticket ID, or the original value if no match is found.
+ */
+
+export const GetJiraId = (): string => {
+    let jiraId: string = ENV_VARIABLES.JIRA_TICKET_ID;
+    const regex = /^([A-Z]+-\d+)/;
+    const match = regex.exec(ENV_VARIABLES.JIRA_TICKET_ID.toString());
+    if (match) {
+        jiraId = match[1];
+    }
+    return jiraId;
+}

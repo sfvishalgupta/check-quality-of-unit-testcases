@@ -21,7 +21,7 @@ const GITHUB_OWNER = process.env.GITHUB_OWNER ?? null;
 const GITHUB_REPO = process.env.GITHUB_REPO ?? null;
 
 if (!GITHUB_OWNER || !GITHUB_REPO || !GITHUB_TOKEN) {
-    throw new Error('Not a valid Request');
+    throw new Error('Not a valid Request. Missing GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN');
 }
 
 const rl = readline.createInterface({
@@ -124,6 +124,8 @@ Running for project:- \x1b[31m\x1b[1m${GITHUB_REPO}\x1b[0m.
 Running for Project:- \x1b[31m\x1b[1m${process.env.JIRA_PROJECT_KEY}\x1b[0m.
 Running for Confluence:- \x1b[31m\x1b[1m${process.env.PROJECT_DOCUMENT_PATH}\x1b[0m.
 Running for Type:- \x1b[31m\x1b[1m${process.env.USE_FOR}\x1b[0m.
+Running for Owner:- \x1b[31m\x1b[1m${process.env.GITHUB_OWNER}\x1b[0m.
+
 Choose an action:`,
     ['Create Repo Variables', 'Create Repo Secrets', 'Exit'],
 ).then((action) => {

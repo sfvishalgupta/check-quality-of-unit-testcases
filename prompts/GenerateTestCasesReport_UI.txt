@@ -37,26 +37,27 @@ Below the prompt, you'll find a JSON containing the list of **already written te
 ---
 
 **FORMAT YOUR OUTPUT EXACTLY LIKE THIS:**
-```markdown
-## [Jira ID] Jira Story Title
 
-• ✅ Fully covered test cases
+<b>[Jira ID] Jira Story Title</b>
+
+• ✅ <b>Fully covered test cases</b> (count of Fully covered test cases)
   - ...
   - ...
 
-• ⚠️ Partially covered test cases
+• ⚠️ <b>Partially covered test cases</b> (count of Partially covered test cases)
   - ... (missing XYZ)
   - ...
 
-• ❌ Missing test cases
+• ❌ <b>Missing test cases</b> (count of Missing covered test cases)
   - ... (should have tested ...)
   - ...
 
-• 💡 Suggested improvements
+• 💡 <b>Suggested improvements</b> (count of Missing covered test cases)
   - ...
 
-• 🧮 Final Score: X/10
-```
+<h2> 🧮 Final Score:</h2> <b>X/10</b>
+
+
 🚫 Do NOT include assumptions, meta-comments, or Jira summaries.
 🎯 Focus strictly on the test case extraction and coverage gap analysis.
 
