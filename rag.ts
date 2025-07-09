@@ -24,9 +24,9 @@ import {
     GetJiraId,
     CreateUpdateComments,
     GetSummarizePrompt,
-} from './utils';
+} from './OpenRouterAICore/thirdPartyUtils';
 
-import { ERRORS, ENV_VARIABLES } from './environment';
+import { ERRORS, ENV_VARIABLES as GlobalENV } from './environment';
 import { GetStore } from './OpenRouterAICore/store/utils';
 import { logger } from './OpenRouterAICore/pino';
 import { ConfluenceCreatePageTool } from './OpenRouterAICore/tools';
@@ -36,7 +36,7 @@ async function parseReportFile(): Promise<string> {
     try {
         const files = await GetPullRequestDiff();
         const filteredFiles = files.map(f => f.replace('src', 'dist').replace('.ts', ''));
-        let reportFileContent = await GetReportFileContent(process.cwd() + '/' + ENV_VARIABLES.REPORT_FILE_PATH);
+        let reportFileContent = await GetReportFileContent(process.cwd() + '/' + GlobalENV.REPORT_FILE_PATH);
 
         if (filteredFiles.length === 0) {
             return reportFileContent;
@@ -68,12 +68,12 @@ function getSummaryResponseString(): string {
 }
 
 function getPRLink(): string {
-    return `<a href="https://github.com/${ENV_VARIABLES.GITHUB_OWNER}/${ENV_VARIABLES.GITHUB_REPO}/pull/${ENV_VARIABLES.GITHUB_ISSUE_NUMBER}" target="_blank">Link</a>`;
+    return `<a href="https://github.com/${GlobalENV.GITHUB_OWNER}/${GlobalENV.GITHUB_REPO}/pull/${GlobalENV.GITHUB_ISSUE_NUMBER}" target="_blank">Link</a>`;
 }
 
 function getConfluenceLink(createPageResponse: any): string {
-    return `<a target="_blank" href="${ENV_VARIABLES.JIRA_URL_OUTPUT}/wiki/spaces/` +
-        `${ENV_VARIABLES.JIRA_SPACE_KEY_OUTPUT}/pages/` +
+    return `<a target="_blank" href="${GlobalENV.JIRA_URL_OUTPUT}/wiki/spaces/` +
+        `${GlobalENV.JIRA_SPACE_KEY_OUTPUT}/pages/` +
         `${createPageResponse.pageId}/${createPageResponse.pageTitle}">link</a>`;
 }
 
@@ -88,7 +88,7 @@ async function processModelResponses(
         logger.info(`Getting Response Model :- ${modelName}`);
         let storeResponse: string = await store.generate(
             modelName.trim(),
-            ENV_VARIABLES.JIRA_PROJECT_KEY + '-index',
+            GlobalENV.JIRA_PROJECT_KEY + '-index',
             userPrompt
         );
         response += `<b>ResponseModel:-</b> ${modelName} <br /><br/>`;
@@ -116,7 +116,7 @@ async function main(): Promise<string> {
     let response: string = '';
     let summaryResponse: string = getSummaryResponseString();
     try {
-        if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === '') {
+        if (GlobalENV.REPORT_FILE_PATH.trim() === '') {
             throw new CustomError(
                 ERRORS.ENV_NOT_SET,
                 "Please provide a valid report file path in the environment variables."
@@ -126,7 +126,7 @@ async function main(): Promise<string> {
         const jiraTitle: string = await GetJiraTitle();
         const projectDocument = await GetProjectDocument();
         const store = GetStore();
-        await store.addDocument(ENV_VARIABLES.JIRA_PROJECT_KEY + '-index', projectDocument);
+        await store.addDocument(GlobalENV.JIRA_PROJECT_KEY + '-index', projectDocument);
 
         const reportFileContent = await parseReportFile();
         let userPrompt: string = await GetUserPrompt();
@@ -136,8 +136,8 @@ async function main(): Promise<string> {
         userPrompt = userPrompt.split('}').join('');
 
         fs.writeFileSync('prompt.txt', userPrompt);
-        logger.info(`Getting Response from URL :- ${ENV_VARIABLES.OPEN_ROUTER_API_URL}`);
-        const modelNames = ENV_VARIABLES.OPEN_ROUTER_MODEL.split(',');
+        logger.info(`Getting Response from URL :- ${GlobalENV.OPEN_ROUTER_API_URL}`);
+        const modelNames = GlobalENV.OPEN_ROUTER_MODEL.split(',');
 
         const modelResults = await processModelResponses(modelNames, store, userPrompt, summaryResponse);
         response = modelResults.response;
@@ -149,12 +149,12 @@ async function main(): Promise<string> {
                     .split('```').join('')
                     .split('\n').join('<br />');
                 const createPageResponse = await ConfluenceCreatePageTool(
-                    ENV_VARIABLES.JIRA_SPACE_KEY_OUTPUT, GetJiraId()
+                    GlobalENV.JIRA_SPACE_KEY_OUTPUT, GetJiraId()
                 ).func(
                     '<b>Date:-</b>' + new Date().toLocaleString(undefined, { timeZone: 'Asia/Kolkata' }) + "<br />" +
-                    '<b>Repo:-</b>' + ENV_VARIABLES.GITHUB_REPO + '<br />' +
+                    '<b>Repo:-</b>' + GlobalENV.GITHUB_REPO + '<br />' +
                     '<b>PR:-</b>' + getPRLink() + '<br />' +
-                    '<b>For:-</b>' + ENV_VARIABLES.USE_FOR + '<br />' +
+                    '<b>For:-</b>' + GlobalENV.USE_FOR + '<br />' +
                     response
                 );
                 summaryResponse += '<br /><b>Details:-</b> ' + getConfluenceLink(createPageResponse);
