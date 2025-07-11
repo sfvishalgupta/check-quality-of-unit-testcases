@@ -24,19 +24,20 @@ import {
     GetJiraId,
     CreateUpdateComments,
     GetSummarizePrompt,
-} from './OpenRouterAICore/thirdPartyUtils';
+} from 'OpenRouterAICore/thirdPartyUtils';
 
-import { ERRORS, ENV_VARIABLES as GlobalENV } from './environment';
-import { GetStore } from './OpenRouterAICore/store/utils';
-import { logger } from './OpenRouterAICore/pino';
-import { ConfluenceCreatePageTool } from './OpenRouterAICore/tools';
-import { CustomError } from './OpenRouterAICore/customError';
+import { ERRORS, ENV_VARIABLES as GlobalENV } from 'OpenRouterAICore/environment';
+import { ENV_VARIABLES } from './environment';
+import { GetStore } from 'OpenRouterAICore/store/utils';
+import { logger } from 'OpenRouterAICore/pino';
+import { ConfluenceCreatePageTool } from 'OpenRouterAICore/tools';
+import { CustomError } from 'OpenRouterAICore/customError';
 
 async function parseReportFile(): Promise<string> {
     try {
         const files = await GetPullRequestDiff();
         const filteredFiles = files.map(f => f.replace('src', 'dist').replace('.ts', ''));
-        let reportFileContent = await GetReportFileContent(process.cwd() + '/' + GlobalENV.REPORT_FILE_PATH);
+        let reportFileContent = await GetReportFileContent(process.cwd() + '/' + ENV_VARIABLES.REPORT_FILE_PATH);
 
         if (filteredFiles.length === 0) {
             return reportFileContent;
@@ -72,8 +73,8 @@ function getPRLink(): string {
 }
 
 function getConfluenceLink(createPageResponse: any): string {
-    return `<a target="_blank" href="${GlobalENV.JIRA_URL_OUTPUT}/wiki/spaces/` +
-        `${GlobalENV.JIRA_SPACE_KEY_OUTPUT}/pages/` +
+    return `<a target="_blank" href="${ENV_VARIABLES.JIRA_URL_OUTPUT}/wiki/spaces/` +
+        `${ENV_VARIABLES.JIRA_SPACE_KEY_OUTPUT}/pages/` +
         `${createPageResponse.pageId}/${createPageResponse.pageTitle}">link</a>`;
 }
 
@@ -116,7 +117,7 @@ async function main(): Promise<string> {
     let response: string = '';
     let summaryResponse: string = getSummaryResponseString();
     try {
-        if (GlobalENV.REPORT_FILE_PATH.trim() === '') {
+        if (ENV_VARIABLES.REPORT_FILE_PATH.trim() === '') {
             throw new CustomError(
                 ERRORS.ENV_NOT_SET,
                 "Please provide a valid report file path in the environment variables."
@@ -142,14 +143,17 @@ async function main(): Promise<string> {
         const modelResults = await processModelResponses(modelNames, store, userPrompt, summaryResponse);
         response = modelResults.response;
         summaryResponse = modelResults.summaryResponse;
-
         if (response) {
             try {
                 response = response.split('```markdown').join('')
                     .split('```').join('')
                     .split('\n').join('<br />');
                 const createPageResponse = await ConfluenceCreatePageTool(
-                    GlobalENV.JIRA_SPACE_KEY_OUTPUT, GetJiraId()
+                    ENV_VARIABLES.JIRA_URL_OUTPUT,
+                    ENV_VARIABLES.JIRA_EMAIL_OUTPUT,
+                    ENV_VARIABLES.JIRA_API_TOKEN_OUTPUT,
+                    ENV_VARIABLES.JIRA_SPACE_KEY_OUTPUT, 
+                    GetJiraId()
                 ).func(
                     '<b>Date:-</b>' + new Date().toLocaleString(undefined, { timeZone: 'Asia/Kolkata' }) + "<br />" +
                     '<b>Repo:-</b>' + GlobalENV.GITHUB_REPO + '<br />' +

@@ -158,4 +158,4 @@ runs:
               VECTOR_STORE_TYPE: 'QDRANT'
               VECTOR_STORE_URL: 'http://127.0.0.1:6333'
           run: |
-              npx ts-node ${{ github.action_path }}/rag.ts
+              npx ts-node ${{ github.action_path }}/main.ts
